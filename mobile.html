@@ -32,7 +32,11 @@
         .slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #3b82f6; cursor: pointer; }
         .premium-lock { position: relative; }
         .premium-lock::after { content: '🔒'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; opacity: 0.8; }
-        .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #1f2937; color: white; padding: 12px 20px; border-radius: 25px; display: none; z-index: 2000; font-size: 14px; }
+        .contact-locked { filter: blur(8px); user-select: none; pointer-events: none; }
+        .unlock-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 16px; z-index: 10; }
+        .property-detail { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: white; z-index: 100; overflow-y: auto; display: none; }
+        .property-detail.active { display: block; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
     </style>
 </head>
 <body class="pb-20">
@@ -291,6 +295,123 @@
         </div>
     </div>
 
+    <!-- Property Detail Page -->
+    <div id="propertyDetail" class="property-detail">
+        <div class="sticky top-0 bg-white z-50 px-4 py-3 border-b flex justify-between items-center">
+            <button onclick="closePropertyDetail()" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h2 class="font-bold">Property Details</h2>
+            <button onclick="shareProperty()" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                <i class="fas fa-share-alt"></i>
+            </button>
+        </div>
+
+        <div class="p-4">
+            <!-- Image -->
+            <div class="mb-4">
+                <img id="detailImage" src="" class="w-full h-64 object-cover rounded-2xl">
+                <div class="absolute top-6 left-6">
+                    <span id="detailBadge" class="badge"></span>
+                </div>
+            </div>
+
+            <!-- Price & Address -->
+            <div class="mb-4">
+                <h1 id="detailAddress" class="text-xl font-bold mb-1"></h1>
+                <p id="detailLocation" class="text-gray-500 text-sm mb-3"></p>
+                <div class="flex items-baseline space-x-3">
+                    <p id="detailPrice" class="text-3xl font-bold text-blue-600"></p>
+                    <p id="detailOriginalPrice" class="text-gray-400 line-through"></p>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-4 gap-2 mb-4">
+                <div class="bg-gray-50 rounded-xl p-3 text-center">
+                    <i class="fas fa-bed text-blue-500 mb-1"></i>
+                    <p id="detailBeds" class="font-bold"></p>
+                    <p class="text-xs text-gray-500">Beds</p>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-3 text-center">
+                    <i class="fas fa-bath text-blue-500 mb-1"></i>
+                    <p id="detailBaths" class="font-bold"></p>
+                    <p class="text-xs text-gray-500">Baths</p>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-3 text-center">
+                    <i class="fas fa-ruler text-blue-500 mb-1"></i>
+                    <p id="detailSqft" class="font-bold"></p>
+                    <p class="text-xs text-gray-500">SqFt</p>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-3 text-center">
+                    <i class="fas fa-calendar text-blue-500 mb-1"></i>
+                    <p id="detailDOM" class="font-bold"></p>
+                    <p class="text-xs text-gray-500">Days</p>
+                </div>
+            </div>
+
+            <!-- Profit Analysis -->
+            <div class="mobile-card p-4 mb-4">
+                <h3 class="font-bold mb-3">Investment Analysis</h3>
+                <div class="flex justify-between mb-2">
+                    <span class="text-gray-500">Est. ARV</span>
+                    <span id="detailARV" class="font-bold text-green-600"></span>
+                </div>
+                <div class="flex justify-between mb-2">
+                    <span class="text-gray-500">Est. Repairs</span>
+                    <span id="detailRepairs" class="font-bold text-orange-600"></span>
+                </div>
+                <div class="flex justify-between pt-2 border-t">
+                    <span class="text-gray-500">Est. Profit</span>
+                    <span id="detailProfit" class="font-bold text-blue-600"></span>
+                </div>
+            </div>
+
+            <!-- Contact (Premium) -->
+            <div class="relative mb-4">
+                <div class="mobile-card p-4 bg-gradient-to-r from-slate-800 to-slate-900 text-white">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <p class="text-xs text-blue-200">Listing Agent</p>
+                            <p id="detailAgentName" class="font-bold"></p>
+                            <p id="detailAgentCompany" class="text-sm text-blue-200"></p>
+                        </div>
+                        <i class="fas fa-user-tie text-2xl text-blue-400"></i>
+                    </div>
+                    <div id="contactInfoMobile">
+                        <div class="flex space-x-2 mb-3">
+                            <div class="flex-1 bg-white/10 rounded-lg p-2 text-center">
+                                <i class="fas fa-phone text-blue-400 mb-1"></i>
+                                <p id="detailAgentPhone" class="text-sm"></p>
+                            </div>
+                            <div class="flex-1 bg-white/10 rounded-lg p-2 text-center">
+                                <i class="fas fa-envelope text-blue-400 mb-1"></i>
+                                <p id="detailAgentEmail" class="text-xs truncate"></p>
+                            </div>
+                        </div>
+                        <button onclick="contactAgent()" class="w-full bg-white text-slate-900 py-3 rounded-xl font-bold">
+                            <i class="fas fa-phone mr-2"></i>Call Agent
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Premium Lock -->
+                <div id="contactLockMobile" class="unlock-overlay hidden">
+                    <i class="fas fa-lock text-3xl text-yellow-400 mb-2"></i>
+                    <p class="text-white font-bold mb-1">Premium Feature</p>
+                    <p class="text-gray-300 text-xs mb-3">Upgrade to view contact</p>
+                    <button onclick="openPricing(); closePropertyDetail();" class="bg-yellow-400 text-gray-900 px-4 py-2 rounded-full text-sm font-bold">
+                        Upgrade to Pro
+                    </button>
+                </div>
+            </div>
+
+            <button onclick="scheduleTour()" class="btn-primary py-4 text-lg mb-4">
+                <i class="fas fa-calendar-check mr-2"></i>Schedule Tour
+            </button>
+        </div>
+    </div>
+
     <!-- TOAST -->
     <div id="toast" class="toast"></div>
 
@@ -401,7 +522,7 @@
         function renderHotDeals() {
             const deals = allDeals.slice(0, 3);
             document.getElementById('hotDeals').innerHTML = deals.map(d => `
-                <div class="deal-card">
+                <div class="deal-card" onclick="viewProperty(${d.id})" style="cursor: pointer;">
                     <div class="flex justify-between items-start mb-2">
                         <div>
                             <p class="font-bold">${d.address}</p>
@@ -414,7 +535,7 @@
                             <p class="text-lg font-bold">$${d.price.toLocaleString()}</p>
                             <p class="text-xs text-green-600">+$${d.profit.toLocaleString()}</p>
                         </div>
-                        <button onclick="toggleSave(${d.id})" class="text-xl ${isSaved(d.id) ? 'text-red-500' : 'text-gray-300'}">
+                        <button onclick="event.stopPropagation(); toggleSave(${d.id})" class="text-xl ${isSaved(d.id) ? 'text-red-500' : 'text-gray-300'}">
                             <i class="${isSaved(d.id) ? 'fas' : 'far'} fa-heart"></i>
                         </button>
                     </div>
@@ -425,7 +546,7 @@
         // Render Search
         function renderSearchResults() {
             document.getElementById('searchResults').innerHTML = allDeals.map(d => `
-                <div class="deal-card">
+                <div class="deal-card" onclick="viewProperty(${d.id})" style="cursor: pointer;">
                     <div class="flex justify-between items-start">
                         <div>
                             <p class="font-bold">${d.address}</p>
@@ -570,6 +691,93 @@
             }
             closePricing();
             renderHotDeals();
+        }
+
+        // Property Detail Functions
+        const agentDatabase = [
+            { name: "Sarah Johnson", company: "Coastal Realty", phone: "(561) 555-0123", email: "sarah@coastal.com" },
+            { name: "Michael Chen", company: "Premier Props", phone: "(561) 555-0456", email: "mike@premier.com" },
+            { name: "Jessica Williams", company: "SF Homes", phone: "(561) 555-0789", email: "jess@sfhomes.com" },
+            { name: "David Rodriguez", company: "Beachside", phone: "(561) 555-0321", email: "dave@beachside.com" }
+        ];
+        
+        const propertyImages = [
+            "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600",
+            "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600",
+            "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600",
+            "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600"
+        ];
+
+        function viewProperty(id) {
+            const property = allDeals.find(d => d.id === id);
+            if (!property) return;
+            
+            const agent = agentDatabase[id % agentDatabase.length];
+            
+            document.getElementById('detailImage').src = propertyImages[id % propertyImages.length];
+            document.getElementById('detailAddress').textContent = property.address;
+            document.getElementById('detailLocation').textContent = `${property.city}, FL`;
+            document.getElementById('detailPrice').textContent = '$' + property.price.toLocaleString();
+            document.getElementById('detailOriginalPrice').textContent = '$' + property.originalPrice.toLocaleString();
+            document.getElementById('detailBeds').textContent = property.beds;
+            document.getElementById('detailBaths').textContent = property.baths;
+            document.getElementById('detailSqft').textContent = property.sqft.toLocaleString();
+            document.getElementById('detailDOM').textContent = property.dom;
+            
+            const arv = Math.round(property.price * 1.25);
+            const repairs = Math.round(property.price * 0.05);
+            
+            document.getElementById('detailARV').textContent = '$' + arv.toLocaleString();
+            document.getElementById('detailRepairs').textContent = '$' + repairs.toLocaleString();
+            document.getElementById('detailProfit').textContent = '$' + property.profit.toLocaleString();
+            document.getElementById('detailProfit').className = 'font-bold ' + (property.profit > 0 ? 'text-green-600' : 'text-red-600');
+            
+            document.getElementById('detailAgentName').textContent = agent.name;
+            document.getElementById('detailAgentCompany').textContent = agent.company;
+            document.getElementById('detailAgentPhone').textContent = agent.phone;
+            document.getElementById('detailAgentEmail').textContent = agent.email;
+            
+            // Show/hide contact based on plan
+            if (currentPlan === 'free') {
+                document.getElementById('contactLockMobile').classList.remove('hidden');
+                document.getElementById('contactInfoMobile').classList.add('contact-locked');
+            } else {
+                document.getElementById('contactLockMobile').classList.add('hidden');
+                document.getElementById('contactInfoMobile').classList.remove('contact-locked');
+            }
+            
+            document.getElementById('propertyDetail').classList.add('active');
+        }
+
+        function closePropertyDetail() {
+            document.getElementById('propertyDetail').classList.remove('active');
+        }
+
+        function shareProperty() {
+            if (navigator.share) {
+                navigator.share({ title: 'PropHunt Property', text: 'Check this out!', url: window.location.href });
+            } else {
+                showToast('🔗 Link copied!');
+            }
+        }
+
+        function contactAgent() {
+            if (currentPlan === 'free') {
+                openPricing();
+                closePropertyDetail();
+            } else {
+                const phone = document.getElementById('detailAgentPhone').textContent;
+                window.location.href = 'tel:' + phone.replace(/\D/g, '');
+            }
+        }
+
+        function scheduleTour() {
+            if (currentPlan === 'free') {
+                showToast('🔒 Schedule tour requires Pro');
+                setTimeout(() => { openPricing(); closePropertyDetail(); }, 800);
+            } else {
+                showToast('📅 Tour request sent!');
+            }
         }
 
         // Toast

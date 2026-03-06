@@ -47,6 +47,13 @@
         .toast { position: fixed; bottom: 20px; right: 20px; background: #1f2937; color: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); display: none; animation: slideInRight 0.3s ease; z-index: 2000; }
         @keyframes slideInRight { from { transform: translateX(400px); } to { transform: translateX(0); } }
         .saved-indicator { color: #ef4444; }
+        .property-detail-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; overflow-y: auto; }
+        .property-detail-modal.active { display: block; }
+        .property-detail-content { background: white; min-height: 100vh; max-width: 1000px; margin: 0 auto; }
+        .gallery-img { width: 100%; height: 300px; object-fit: cover; border-radius: 8px; }
+        .contact-card { background: linear-gradient(135deg, #1e3a5f, #0f172a); color: white; padding: 24px; border-radius: 16px; }
+        .contact-locked { filter: blur(8px); user-select: none; pointer-events: none; }
+        .unlock-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 16px; }
     </style>
 </head>
 <body>
@@ -551,6 +558,189 @@
         </div>
     </div>
 
+    <!-- Property Detail Modal -->
+    <div id="propertyDetailModal" class="property-detail-modal">
+        <div class="property-detail-content">
+            <!-- Header -->
+            <div class="sticky top-0 bg-white z-50 px-6 py-4 border-b flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <button onclick="closePropertyDetail()" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <h2 class="text-xl font-bold">Property Details</h2>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="shareProperty()" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200">
+                        <i class="fas fa-share-alt"></i>
+                    </button>
+                    <button onclick="toggleSaveFromDetail()" id="detailSaveBtn" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200">
+                        <i class="far fa-heart"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <!-- Image Gallery -->
+                <div class="mb-6">
+                    <div class="relative">
+                        <img id="detailMainImage" src="" alt="Property" class="w-full h-80 object-cover rounded-2xl">
+                        <div class="absolute top-4 left-4">
+                            <span id="detailTypeBadge" class="badge"></span>
+                        </div>
+                        <div class="absolute bottom-4 right-4 bg-black/70 text-white px-4 py-2 rounded-full text-sm">
+                            <i class="fas fa-images mr-2"></i><span id="imageCount">1/8</span>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 mt-3 overflow-x-auto" id="detailThumbnails">
+                        <!-- Thumbnails -->
+                    </div>
+                </div>
+
+                <!-- Property Info Header -->
+                <div class="mb-6">
+                    <h1 id="detailAddress" class="text-2xl font-bold mb-2"></h1>
+                    <p id="detailLocation" class="text-gray-500 mb-4"></p>
+                    <div class="flex items-end space-x-4">
+                        <p id="detailPrice" class="text-4xl font-bold text-blue-600"></p>
+                        <p id="detailOriginalPrice" class="text-xl text-gray-400 line-through mb-1"></p>
+                        <span id="detailDiscount" class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm font-bold mb-1"></span>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-4 gap-4 mb-6">
+                    <div class="text-center p-4 bg-gray-50 rounded-xl">
+                        <i class="fas fa-bed text-2xl text-blue-500 mb-2"></i>
+                        <p id="detailBeds" class="text-xl font-bold"></p>
+                        <p class="text-sm text-gray-500">Bedrooms</p>
+                    </div>
+                    <div class="text-center p-4 bg-gray-50 rounded-xl">
+                        <i class="fas fa-bath text-2xl text-blue-500 mb-2"></i>
+                        <p id="detailBaths" class="text-xl font-bold"></p>
+                        <p class="text-sm text-gray-500">Bathrooms</p>
+                    </div>
+                    <div class="text-center p-4 bg-gray-50 rounded-xl">
+                        <i class="fas fa-ruler-combined text-2xl text-blue-500 mb-2"></i>
+                        <p id="detailSqft" class="text-xl font-bold"></p>
+                        <p class="text-sm text-gray-500">Sq Ft</p>
+                    </div>
+                    <div class="text-center p-4 bg-gray-50 rounded-xl">
+                        <i class="fas fa-calendar text-2xl text-blue-500 mb-2"></i>
+                        <p id="detailDOM" class="text-xl font-bold"></p>
+                        <p class="text-sm text-gray-500">Days Listed</p>
+                    </div>
+                </div>
+
+                <!-- Investment Analysis -->
+                <div class="card p-6 mb-6">
+                    <h3 class="font-bold text-lg mb-4"><i class="fas fa-chart-pie mr-2 text-blue-500"></i>Investment Analysis</h3>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-500">Est. ARV</p>
+                            <p id="detailARV" class="text-xl font-bold text-green-600"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Est. Repairs</p>
+                            <p id="detailRepairs" class="text-xl font-bold text-orange-600"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Est. Profit</p>
+                            <p id="detailProfit" class="text-xl font-bold text-blue-600"></p>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-green-50 rounded-lg">
+                        <p class="text-sm text-green-800"><i class="fas fa-check-circle mr-2"></i><span id="detailAnalysisText"></span></p>
+                    </div>
+                </div>
+
+                <!-- Property Description -->
+                <div class="mb-6">
+                    <h3 class="font-bold text-lg mb-3">Property Description</h3>
+                    <p id="detailDescription" class="text-gray-600 leading-relaxed"></p>
+                </div>
+
+                <!-- Property Details -->
+                <div class="card p-6 mb-6">
+                    <h3 class="font-bold text-lg mb-4">Property Details</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="flex justify-between py-2 border-b">
+                            <span class="text-gray-500">Property Type</span>
+                            <span id="detailPropType" class="font-medium"></span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b">
+                            <span class="text-gray-500">Year Built</span>
+                            <span id="detailYear" class="font-medium"></span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b">
+                            <span class="text-gray-500">Lot Size</span>
+                            <span id="detailLot" class="font-medium"></span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b">
+                            <span class="text-gray-500">HOA Fees</span>
+                            <span id="detailHOA" class="font-medium"></span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b">
+                            <span class="text-gray-500">Taxes (2024)</span>
+                            <span id="detailTaxes" class="font-medium"></span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b">
+                            <span class="text-gray-500">Zoning</span>
+                            <span id="detailZoning" class="font-medium"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Info (Premium) -->
+                <div class="relative mb-6">
+                    <div id="contactCard" class="contact-card">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="font-bold text-lg">Contact Information</h3>
+                                <p class="text-blue-200 text-sm">Get in touch with the listing agent</p>
+                            </div>
+                            <i class="fas fa-user-tie text-3xl text-blue-400"></i>
+                        </div>
+                        <div id="contactInfo">
+                            <div class="mb-4">
+                                <p class="text-blue-200 text-sm mb-1">Listing Agent</p>
+                                <p id="detailAgentName" class="font-bold text-xl"></p>
+                                <p id="detailAgentCompany" class="text-blue-200"></p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 mb-4">
+                                <div class="bg-white/10 p-3 rounded-lg">
+                                    <i class="fas fa-phone mr-2 text-blue-400"></i>
+                                    <span id="detailAgentPhone"></span>
+                                </div>
+                                <div class="bg-white/10 p-3 rounded-lg">
+                                    <i class="fas fa-envelope mr-2 text-blue-400"></i>
+                                    <span id="detailAgentEmail"></span>
+                                </div>
+                            </div>
+                            <button onclick="contactAgent()" class="w-full bg-white text-blue-900 py-3 rounded-lg font-bold hover:bg-blue-50">
+                                <i class="fas fa-phone mr-2"></i>Call Agent Now
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Premium Lock Overlay -->
+                    <div id="contactLock" class="unlock-overlay" style="display: none;">
+                        <i class="fas fa-lock text-4xl text-yellow-400 mb-3"></i>
+                        <p class="text-white font-bold text-xl mb-2">Premium Feature</p>
+                        <p class="text-gray-300 text-center mb-4 text-sm">Upgrade to view agent contact info</p>
+                        <button onclick="openPricingModal(); closePropertyDetail();" class="bg-yellow-400 text-gray-900 px-6 py-3 rounded-full font-bold">
+                            <i class="fas fa-crown mr-2"></i>Upgrade to Pro
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Schedule Tour -->
+                <button onclick="scheduleTour()" class="w-full btn-primary py-4 text-lg mb-6">
+                    <i class="fas fa-calendar-check mr-2"></i>Schedule Property Tour
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast" class="toast"></div>
 
@@ -1042,12 +1232,180 @@
             }, 3000);
         }
 
-        function viewProperty(id) {
-            showToast('Viewing property details... (Premium feature)');
-        }
-
         function showUserMenu() {
             showToast(`Logged in as ${user.name} (${currentPlan.toUpperCase()})`);
+        }
+
+        // Property Detail Functions
+        let currentPropertyId = null;
+        
+        const agentDatabase = [
+            { name: "Sarah Johnson", company: "Coastal Realty Group", phone: "(561) 555-0123", email: "sarah.j@coastalrealty.com" },
+            { name: "Michael Chen", company: "Premier Properties", phone: "(561) 555-0456", email: "mchen@premierprops.com" },
+            { name: "Jessica Williams", company: "South Florida Homes", phone: "(561) 555-0789", email: "jwilliams@sfhomes.com" },
+            { name: "David Rodriguez", company: "Beachside Realty", phone: "(561) 555-0321", email: "drodriguez@beachside.com" },
+            { name: "Amanda Foster", company: "Luxury Living Real Estate", phone: "(561) 555-0654", email: "afoster@luxuryliving.com" }
+        ];
+        
+        const propertyImages = [
+            "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800",
+            "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
+            "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800",
+            "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
+            "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800",
+            "https://images.unsplash.com/photo-1600573472592-401b489a3cdc?w=800"
+        ];
+
+        function viewProperty(id) {
+            currentPropertyId = id;
+            const property = allProperties.find(p => p.id === id);
+            if (!property) return;
+            
+            // Get random agent for this property
+            const agent = agentDatabase[id % agentDatabase.length];
+            
+            // Populate basic info
+            document.getElementById('detailAddress').textContent = property.address;
+            document.getElementById('detailLocation').textContent = `${property.city}, FL ${property.zip || '33401'}`;
+            document.getElementById('detailPrice').textContent = `$${property.price.toLocaleString()}`;
+            document.getElementById('detailOriginalPrice').textContent = `$${property.originalPrice.toLocaleString()}`;
+            document.getElementById('detailDiscount').textContent = `${Math.round((1 - property.price/property.originalPrice) * 100)}% OFF`;
+            
+            // Populate stats
+            document.getElementById('detailBeds').textContent = property.beds;
+            document.getElementById('detailBaths').textContent = property.baths;
+            document.getElementById('detailSqft').textContent = property.sqft.toLocaleString();
+            document.getElementById('detailDOM').textContent = property.dom;
+            
+            // Investment analysis
+            document.getElementById('detailARV').textContent = `$${property.arv.toLocaleString()}`;
+            document.getElementById('detailRepairs').textContent = `$${property.repairs.toLocaleString()}`;
+            document.getElementById('detailProfit').textContent = `$${property.profit.toLocaleString()}`;
+            document.getElementById('detailProfit').className = `text-xl font-bold ${property.profit > 0 ? 'text-green-600' : 'text-red-600'}`;
+            
+            const profitPercent = Math.round((property.profit / property.price) * 100);
+            document.getElementById('detailAnalysisText').textContent = 
+                property.profit > 0 
+                    ? `Great opportunity! Estimated ${profitPercent}% return on investment after repairs.` 
+                    : `Caution: Property may require significant repairs. Consider negotiating price.`;
+            
+            // Description
+            const descriptions = [
+                `This stunning ${property.beds}-bedroom, ${property.baths}-bathroom home offers ${property.sqft.toLocaleString()} sq ft of living space. Located in a desirable neighborhood with excellent schools and convenient access to shopping and dining. Property features updated kitchen, spacious backyard, and modern finishes throughout.`,
+                `Opportunity knocks! This ${property.beds}BD/${property.baths}BA home sits on a generous lot in ${property.city}. With ${property.sqft.toLocaleString()} sq ft, there's plenty of room to grow. Home needs some TLC but has great bones and tremendous potential. Don't miss this investment opportunity!`,
+                `Beautiful ${property.beds}-bedroom home in the heart of ${property.city}. Features include open floor plan, updated bathrooms, and a private backyard perfect for entertaining. At ${property.sqft.toLocaleString()} sq ft, this property offers space and comfort at an attractive price point.`
+            ];
+            document.getElementById('detailDescription').textContent = descriptions[id % descriptions.length];
+            
+            // Property details
+            const propTypes = { 'foreclosure': 'Single Family', 'pre-foreclosure': 'Single Family', 'stale': 'Condo', 'price-drop': 'Townhouse' };
+            document.getElementById('detailPropType').textContent = propTypes[property.type] || 'Single Family';
+            document.getElementById('detailYear').textContent = 1985 + (id % 35);
+            document.getElementById('detailLot').textContent = `${(0.15 + (id % 10) * 0.05).toFixed(2)} acres`;
+            document.getElementById('detailHOA').textContent = id % 3 === 0 ? `$${150 + (id % 5) * 50}/mo` : 'None';
+            document.getElementById('detailTaxes').textContent = `$${(property.price * 0.012).toFixed(0).toLocaleString()}`;
+            document.getElementById('detailZoning').textContent = 'Residential';
+            
+            // Type badge
+            const badge = getTypeBadge(property.type);
+            document.getElementById('detailTypeBadge').innerHTML = badge;
+            
+            // Gallery
+            document.getElementById('detailMainImage').src = propertyImages[0];
+            document.getElementById('imageCount').textContent = `1/${propertyImages.length}`;
+            
+            const thumbnails = propertyImages.map((img, idx) => `
+                <img src="${img}" onclick="changeMainImage('${img}', ${idx + 1})" 
+                     class="w-20 h-20 object-cover rounded-lg cursor-pointer hover:opacity-80 ${idx === 0 ? 'ring-2 ring-blue-500' : ''}">
+            `).join('');
+            document.getElementById('detailThumbnails').innerHTML = thumbnails;
+            
+            // Agent contact info
+            document.getElementById('detailAgentName').textContent = agent.name;
+            document.getElementById('detailAgentCompany').textContent = agent.company;
+            document.getElementById('detailAgentPhone').textContent = agent.phone;
+            document.getElementById('detailAgentEmail').textContent = agent.email;
+            
+            // Update save button
+            updateDetailSaveButton();
+            
+            // Show/hide contact lock based on plan
+            if (currentPlan === 'free') {
+                document.getElementById('contactLock').style.display = 'flex';
+                document.getElementById('contactInfo').classList.add('contact-locked');
+            } else {
+                document.getElementById('contactLock').style.display = 'none';
+                document.getElementById('contactInfo').classList.remove('contact-locked');
+            }
+            
+            // Show modal
+            document.getElementById('propertyDetailModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePropertyDetail() {
+            document.getElementById('propertyDetailModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+            currentPropertyId = null;
+        }
+
+        function changeMainImage(src, index) {
+            document.getElementById('detailMainImage').src = src;
+            document.getElementById('imageCount').textContent = `${index}/${propertyImages.length}`;
+        }
+
+        function toggleSaveFromDetail() {
+            if (currentPropertyId !== null) {
+                toggleSave(currentPropertyId);
+                updateDetailSaveButton();
+            }
+        }
+
+        function updateDetailSaveButton() {
+            const btn = document.getElementById('detailSaveBtn');
+            if (isSaved(currentPropertyId)) {
+                btn.innerHTML = '<i class="fas fa-heart text-red-500"></i>';
+                btn.classList.add('saved-indicator');
+            } else {
+                btn.innerHTML = '<i class="far fa-heart"></i>';
+                btn.classList.remove('saved-indicator');
+            }
+        }
+
+        function shareProperty() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Check out this property on PropHunt AI',
+                    text: `Great investment opportunity!`,
+                    url: window.location.href
+                });
+            } else {
+                // Copy to clipboard
+                navigator.clipboard.writeText(window.location.href);
+                showToast('🔗 Link copied to clipboard!');
+            }
+        }
+
+        function contactAgent() {
+            if (currentPlan === 'free') {
+                openPricingModal();
+                closePropertyDetail();
+            } else {
+                const phone = document.getElementById('detailAgentPhone').textContent;
+                window.location.href = `tel:${phone.replace(/\D/g, '')}`;
+            }
+        }
+
+        function scheduleTour() {
+            if (currentPlan === 'free') {
+                showToast('🔒 Schedule tour requires Pro plan');
+                setTimeout(() => {
+                    openPricingModal();
+                    closePropertyDetail();
+                }, 1000);
+            } else {
+                showToast('📅 Tour request sent to agent!');
+            }
         }
 
         // Charts
