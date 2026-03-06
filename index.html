@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PropHunt AI Pro - Real Estate Investment Intelligence</title>    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0f172a',
+                        accent: '#3b82f6',
+                        danger: '#ef4444',
+                        success: '#10b981',
+                        warning: '#f59e0b'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .property-card { transition: all 0.3s ease; }
+        .property-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.15); }
+        #map { height: 500px; border-radius: 12px; z-index: 1; }
+        .tab-active { border-bottom: 3px solid #3b82f6; color: #3b82f6; }
+        .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .calc-slider { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 5px; background: #d1d5db; outline: none; }
+        .calc-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #3b82f6; cursor: pointer; }
+        .region-card { cursor: pointer; transition: all 0.2s; }
+        .region-card:hover { transform: scale(1.02); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .region-card.active { border: 3px solid #3b82f6; }
+        .comp-row:hover { background-color: #f3f4f6; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Navigation -->
+    <nav class="bg-primary text-white sticky top-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-home text-2xl text-accent"></i>
+                    <span class="text-xl font-bold">PropHunt<span class="text-accent">AI</span> <span class="text-xs bg-accent px-2 py-1 rounded">PRO</span></span>
+                </div>
+                <div class="hidden md:flex space-x-6">
+                    <button onclick="switchTab('search')" class="hover:text-accent transition tab-btn tab-active" data-tab="search">Search</button>
+                    <button onclick="switchTab('foreclosures')" class="hover:text-accent transition tab-btn" data-tab="foreclosures">Foreclosures</button>
+                    <button onclick="switchTab('stale')" class="hover:text-accent transition tab-btn" data-tab="stale">Stale (70+ Days)</button>
+                    <button onclick="switchTab('rental')" class="hover:text-accent transition tab-btn" data-tab="rental">Rental Estimator</button>
+                    <button onclick="switchTab('comps')" class="hover:text-accent transition tab-btn" data-tab="comps">Comp Analyzer</button>
+                    <button onclick="switchTab('rates')" class="hover:text-accent transition tab-btn" data-tab="rates">Rates</button>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <select id="region-selector" onchange="changeRegion(this.value)" class="bg-gray-800 text-white px-3 py-1 rounded-lg text-sm border border-gray-700">
+                        <option value="west-palm-beach">West Palm Beach</option>
+                        <option value="wellington">Wellington</option>
+                        <option value="tampa">Tampa</option>
+                        <option value="miami">Miami</option>
+                        <option value="orlando">Orlando</option>
+                    </select>
+                    <button onclick="refreshAllData()" class="bg-accent hover:bg-blue-600 px-3 py-1 rounded-lg transition text-sm">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Region Selector Cards -->
+    <div class="bg-white border-b border-gray-200 py-4">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid grid-cols-5 gap-4">
+                <div class="region-card active bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 text-center" onclick="changeRegion('west-palm-beach')" data-region="west-palm-beach">
+                    <p class="font-bold text-primary">West Palm Beach</p>
+                    <p class="text-sm text-gray-600">$453K median</p>
+                    <p class="text-xs text-red-500">▼ 2.4%</p>
+                </div>
+                <div class="region-card bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 text-center" onclick="changeRegion('wellington')" data-region="wellington">
+                    <p class="font-bold text-primary">Wellington</p>
+                    <p class="text-sm text-gray-600">$485K median</p>
+                    <p class="text-xs text-red-500">▼ 1.8%</p>
+                </div>
+                <div class="region-card bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 text-center" onclick="changeRegion('tampa')" data-region="tampa">
+                    <p class="font-bold text-primary">Tampa</p>
+                    <p class="text-sm text-gray-600">$425K median</p>
+                    <p class="text-xs text-red-500">▼ 3.1%</p>
+                </div>
+                <div class="region-card bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl p-4 text-center" onclick="changeRegion('miami')" data-region="miami">
+                    <p class="font-bold text-primary">Miami</p>
+                    <p class="text-sm text-gray-600">$595K median</p>
+                    <p class="text-xs text-red-500">▼ 1.2%</p>
+                </div>
+                <div class="region-card bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 text-center" onclick="changeRegion('orlando')" data-region="orlando">
+                    <p class="font-bold text-primary">Orlando</p>
+                    <p class="text-sm text-gray-600">$395K median</p>
+                    <p class="text-xs text-red-500">▼ 2.8%</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        
+        <!-- Dashboard Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6" id="dashboard-stats">
+            <!-- Populated by JS -->
+        </div>
+
+        <!-- TAB: SEARCH -->
+        <div id="tab-search" class="tab-content">
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                <h2 class="text-2xl font-bold mb-4 gradient-text">Property Intelligence Search</h2>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
+                        <select id="search-type" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent">
+                            <option value="all">All Types</option>
+                            <option value="foreclosure">🔴 Foreclosure/REO</option>
+                            <option value="pre-foreclosure">🟠 Pre-Foreclosure</option>
+                            <option value="stale">🟡 70+ Days on Market</option>
+                            <option value="short-sale">🔵 Short Sale</option>
+                            <option value="auction">🟣 Auction</option>
+                            <option value="price-drop">📉 Recent Price Drop</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Min Price</label>
+                        <select id="search-min-price" class="w-full px-4 py-2 border rounded-lg">
+                            <option value="0">No Min</option>
+                            <option value="100000">$100K</option>
+                            <option value="200000">$200K</option>
+                            <option value="300000">$300K</option>
+                            <option value="500000">$500K</option>
+                            <option value="750000">$750K</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Max Price</label>
+                        <select id="search-max-price" class="w-full px-4 py-2 border rounded-lg">
+                            <option value="999999999">No Max</option>
+                            <option value="300000">$300K</option>
+                            <option value="500000">$500K</option>
+                            <option value="750000">$750K</option>
+                            <option value="1000000">$1M</option>
+                            <option value="2000000">$2M</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Beds/Baths</label>
+                        <div class="flex space-x-2">
+                            <select id="search-beds" class="w-1/2 px-4 py-2 border rounded-lg">
+                                <option value="0">Any Beds</option>
+                                <option value="2">2+</option>
+                                <option value="3">3+</option>
+                                <option value="4">4+</option>
+                            </select>
+                            <select id="search-baths" class="w-1/2 px-4 py-2 border rounded-lg">
+                                <option value="0">Any Baths</option>
+                                <option value="2">2+</option>
+                                <option value="3">3+</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="performSearch()" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-gray-800 transition">
+                            <i class="fas fa-search mr-2"></i>Search
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2">
+                    <div id="search-results" class="space-y-4">
+                        <!-- Results populated by JS -->
+                    </div>
+                </div>
+                <div>
+                    <div id="map" class="bg-gray-200 rounded-xl"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: RENTAL ESTIMATOR -->
+        <div id="tab-rental" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold mb-4"><i class="fas fa-calculator mr-2 text-accent"></i>Rental Income Estimator</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Property Address</label>
+                            <input type="text" id="rent-address" placeholder="Enter address..." class="w-full px-4 py-2 border rounded-lg">
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Bedrooms</label>
+                                <select id="rent-beds" class="w-full px-4 py-2 border rounded-lg">
+                                    <option value="1">1</option>
+                                    <option value="2" selected>2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5+</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Bathrooms</label>
+                                <select id="rent-baths" class="w-full px-4 py-2 border rounded-lg">
+                                    <option value="1">1</option>
+                                    <option value="2" selected>2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4+</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Square Footage</label>
+                            <input type="number" id="rent-sqft" value="1650" class="w-full px-4 py-2 border rounded-lg">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
+                            <select id="rent-type" class="w-full px-4 py-2 border rounded-lg">
+                                <option value="single-family">Single Family</option>
+                                <option value="condo">Condo</option>
+                                <option value="townhouse">Townhouse</option>
+                                <option value="multi-family">Multi-Family</option>
+                            </select>
+                        </div>
+                        
+                        <button onclick="estimateRent()" class="w-full bg-accent text-white py-3 rounded-lg hover:bg-blue-600 transition font-bold">
+                            Estimate Rental Income
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold mb-4"><i class="fas fa-chart-bar mr-2 text-accent"></i>Rent Estimate Results</h3>
+                    
+                    <div id="rent-results" class="hidden">
+                        <div class="text-center mb-6">
+                            <p class="text-sm text-gray-500">Estimated Monthly Rent</p>
+                            <p class="text-4xl font-bold text-primary" id="rent-estimate">$2,800</p>
+                            <p class="text-sm text-gray-500 mt-1">Range: <span id="rent-range">$2,380 - $3,220</span></p>
+                            <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded mt-2">High Confidence</span>
+                        </div>
+                        
+                        <div class="border-t pt-4">
+                            <h4 class="font-medium mb-3">Comparable Rentals</h4>
+                            <div id="rent-comps" class="space-y-3">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                        
+                        <div class="border-t pt-4 mt-4">
+                            <h4 class="font-medium mb-3">Market Trends</h4>
+                            <div class="grid grid-cols-3 gap-4 text-center">
+                                <div>
+                                    <p class="text-2xl font-bold text-accent">+3.2%</p>
+                                    <p class="text-xs text-gray-500">YoY Rent Growth</p>
+                                </div>
+                                <div>
+                                    <p class="text-2xl font-bold text-accent">5.8%</p>
+                                    <p class="text-xs text-gray-500">Vacancy Rate</p>
+                                </div>
+                                <div>
+                                    <p class="text-2xl font-bold text-accent">18</p>
+                                    <p class="text-xs text-gray-500">Avg Days to Rent</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="rent-placeholder" class="text-center text-gray-400 py-12">
+                        <i class="fas fa-home text-6xl mb-4"></i>
+                        <p>Enter property details to get rental estimate</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: COMP ANALYZER -->
+        <div id="tab-comps" class="tab-content hidden">
+            <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                <h3 class="text-xl font-bold mb-4"><i class="fas fa-balance-scale mr-2 text-accent"></i>Comparable Sales Analyzer (ARV Calculator)</h3>
+                
+                <div class="flex space-x-4 mb-6">
+                    <input type="text" id="comp-address" placeholder="Enter subject property address..." class="flex-1 px-4 py-2 border rounded-lg">
+                    <select id="comp-radius" class="px-4 py-2 border rounded-lg">
+                        <option value="0.25">0.25 miles</option>
+                        <option value="0.5" selected>0.5 miles</option>
+                        <option value="1">1 mile</option>
+                        <option value="2">2 miles</option>
+                    </select>
+                    <button onclick="analyzeComps()" class="bg-accent text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition">Analyze</button>
+                </div>
+                
+                <div id="comp-results" class="hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-blue-50 rounded-xl p-4 text-center">
+                            <p class="text-sm text-gray-600">Estimated ARV</p>
+                            <p class="text-3xl font-bold text-primary" id="comp-arv">$435,000</p>
+                        </div>
+                        <div class="bg-green-50 rounded-xl p-4 text-center">
+                            <p class="text-sm text-gray-600">Price per SqFt</p>
+                            <p class="text-3xl font-bold text-primary" id="comp-psf">$263</p>
+                        </div>
+                        <div class="bg-purple-50 rounded-xl p-4 text-center">
+                            <p class="text-sm text-gray-600">Comp Count</p>
+                            <p class="text-3xl font-bold text-primary" id="comp-count">12</p>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left">Address</th>
+                                    <th class="px-4 py-2 text-left">Sold Price</th>
+                                    <th class="px-4 py-2 text-left">Beds/Baths</th>
+                                    <th class="px-4 py-2 text-left">SqFt</th>
+                                    <th class="px-4 py-2 text-left">$/SqFt</th>
+                                    <th class="px-4 py-2 text-left">Sold Date</th>
+                                    <th class="px-4 py-2 text-left">Distance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="comp-table-body">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: RATES -->
+        <div id="tab-rates" class="tab-content hidden">
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h3 class="text-xl font-bold mb-4">Current Mortgage Rates</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="rates-grid">
+                    <!-- Populated by JS -->
+                </div>
+                
+                <div class="h-64">
+                    <canvas id="rates-chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let currentRegion = 'west-palm-beach';
+        let map = null;
+        let markers = [];
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboardStats();
+            initMap();
+            loadRates();
+            performSearch();
+        });
+
+        // Region switching
+        function changeRegion(region) {
+            currentRegion = region;
+            
+            // Update UI
+            document.querySelectorAll('.region-card').forEach(c => {
+                c.classList.remove('active');
+                if(c.dataset.region === region) c.classList.add('active');
+            });
+            
+            document.getElementById('region-selector').value = region;
+            
+            // Reload data
+            loadDashboardStats();
+            performSearch();
+        }
+
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active'));
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('tab-active');
+            
+            if(tab === 'rates' && !window.ratesChart) {
+                setTimeout(initRatesChart, 100);
+            }
+        }
+
+        // Load dashboard stats
+        async function loadDashboardStats() {
+            const stats = {
+                'west-palm-beach': { foreclosure: 247, stale: 1843, dom: 68, median: 453000 },
+                'wellington': { foreclosure: 34, stale: 245, dom: 72, median: 485000 },
+                'tampa': { foreclosure: 512, stale: 2103, dom: 73, median: 425000 },
+                'miami': { foreclosure: 892, stale: 3421, dom: 81, median: 595000 },
+                'orlando': { foreclosure: 423, stale: 1567, dom: 65, median: 395000 }
+            }[currentRegion];
+            
+            const container = document.getElementById('dashboard-stats');
+            container.innerHTML = `
+                <div class="bg-white rounded-xl shadow p-4 border-l-4 border-red-500">
+                    <p class="text-sm text-gray-600">Foreclosures</p>
+                    <p class="text-2xl font-bold text-red-600">${stats.foreclosure}</p>
+                </div>
+                <div class="bg-white rounded-xl shadow p-4 border-l-4 border-yellow-500">
+                    <p class="text-sm text-gray-600">Stale Listings (70+)</p>
+                    <p class="text-2xl font-bold text-yellow-600">${stats.stale}</p>
+                </div>
+                <div class="bg-white rounded-xl shadow p-4 border-l-4 border-blue-500">
+                    <p class="text-sm text-gray-600">Avg Days on Market</p>
+                    <p class="text-2xl font-bold text-blue-600">${stats.dom}</p>
+                </div>
+                <div class="bg-white rounded-xl shadow p-4 border-l-4 border-green-500">
+                    <p class="text-sm text-gray-600">Median Price</p>
+                    <p class="text-2xl font-bold text-green-600">$${(stats.median/1000).toFixed(0)}K</p>
+                </div>
+                <div class="bg-white rounded-xl shadow p-4 border-l-4 border-purple-500">
+                    <p class="text-sm text-gray-600">Market Trend</p>
+                    <p class="text-2xl font-bold text-red-600">▼ 2-3%</p>
+                </div>
+            `;
+        }
+
+        // Initialize map
+        function initMap() {
+            const coords = {
+                'west-palm-beach': [26.7153, -80.0534],
+                'wellington': [26.6618, -80.2684],
+                'tampa': [27.9506, -82.4572],
+                'miami': [25.7617, -80.1918],
+                'orlando': [28.5383, -81.3792]
+            };
+            
+            map = L.map('map').setView(coords[currentRegion], 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        }
+
+        // Property search
+        async function performSearch() {
+            const type = document.getElementById('search-type').value;
+            const minPrice = document.getElementById('search-min-price').value;
+            const maxPrice = document.getElementById('search-max-price').value;
+            
+            // In production: fetch(`/api/properties/search?region=${currentRegion}&type=${type}...`)
+            const mockResults = generateMockProperties(8);
+            
+            const container = document.getElementById('search-results');
+            container.innerHTML = mockResults.map(p => `
+                <div class="property-card bg-white rounded-xl shadow p-4">
+                    <div class="flex justify-between">
+                        <div>
+                            <h4 class="font-bold">${p.address}</h4>
+                            <p class="text-sm text-gray-600">${p.beds}bd | ${p.baths}ba | ${p.sqft.toLocaleString()}sqft</p>
+                            <p class="text-sm text-gray-500">${p.dom} days on market</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xl font-bold text-primary">$${p.price.toLocaleString()}</p>
+                            ${p.originalPrice > p.price ? `<p class="text-sm text-red-500">▼ $${(p.originalPrice-p.price).toLocaleString()}</p>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Update map markers
+            markers.forEach(m => map.removeLayer(m));
+            mockResults.forEach(p => {
+                const marker = L.marker([
+                    26.7153 + (Math.random() - 0.5) * 0.1,
+                    -80.0534 + (Math.random() - 0.5) * 0.1
+                ]).addTo(map);
+                marker.bindPopup(`<b>$${p.price.toLocaleString()}</b><br>${p.address}`);
+                markers.push(marker);
+            });
+        }
+
+        // Rental estimator
+        function estimateRent() {
+            const sqft = parseInt(document.getElementById('rent-sqft').value);
+            const beds = parseInt(document.getElementById('rent-beds').value);
+            
+            // Simple calculation: $1.50-2.50 per sqft depending on region
+            const rates = { 'west-palm-beach': 1.7, 'wellington': 1.6, 'tampa': 1.4, 'miami': 2.2, 'orlando': 1.5 };
+            const baseRate = rates[currentRegion];
+            const estimate = Math.round(sqft * baseRate * (1 + (beds - 2) * 0.1));
+            
+            document.getElementById('rent-placeholder').classList.add('hidden');
+            document.getElementById('rent-results').classList.remove('hidden');
+            document.getElementById('rent-estimate').textContent = `$${estimate.toLocaleString()}`;
+            document.getElementById('rent-range').textContent = `$${Math.round(estimate*0.85).toLocaleString()} - $${Math.round(estimate*1.15).toLocaleString()}`;
+            
+            // Mock comps
+            document.getElementById('rent-comps').innerHTML = [
+                { rent: estimate - 100, dist: 0.3 },
+                { rent: estimate + 150, dist: 0.5 },
+                { rent: estimate - 50, dist: 0.7 }
+            ].map(c => `
+                <div class="flex justify-between text-sm p-2 bg-gray-50 rounded">
+                    <span>${c.dist} miles away</span>
+                    <span class="font-bold">$${c.rent}/mo</span>
+                </div>
+            `).join('');
+        }
+
+        // Comp analyzer
+        function analyzeComps() {
+            const address = document.getElementById('comp-address').value;
+            if(!address) return alert('Please enter an address');
+            
+            document.getElementById('comp-results').classList.remove('hidden');
+            
+            // Mock data
+            const comps = [
+                { address: '123 Sample St', price: 425000, beds: 3, baths: 2, sqft: 1650, date: '2025-01-15', dist: 0.3 },
+                { address: '456 Example Ave', price: 440000, beds: 3, baths: 2, sqft: 1700, date: '2025-02-01', dist: 0.4 },
+                { address: '789 Test Ln', price: 415000, beds: 3, baths: 2, sqft: 1600, date: '2024-12-20', dist: 0.5 }
+            ];
+            
+            const avgPrice = Math.round(comps.reduce((a,c) => a + c.price, 0) / comps.length);
+            const avgPsf = (comps.reduce((a,c) => a + (c.price/c.sqft), 0) / comps.length).toFixed(0);
+            
+            document.getElementById('comp-arv').textContent = `$${avgPrice.toLocaleString()}`;
+            document.getElementById('comp-psf').textContent = `$${avgPsf}`;
+            document.getElementById('comp-count').textContent = comps.length;
+            
+            document.getElementById('comp-table-body').innerHTML = comps.map(c => `
+                <tr class="comp-row border-b">
+                    <td class="px-4 py-2">${c.address}</td>
+                    <td class="px-4 py-2 font-bold">$${c.price.toLocaleString()}</td>
+                    <td class="px-4 py-2">${c.beds}/${c.baths}</td>
+                    <td class="px-4 py-2">${c.sqft.toLocaleString()}</td>
+                    <td class="px-4 py-2">$${Math.round(c.price/c.sqft)}</td>
+                    <td class="px-4 py-2">${c.date}</td>
+                    <td class="px-4 py-2">${c.dist} mi</td>
+                </tr>
+            `).join('');
+        }
+
+        // Load rates
+        function loadRates() {
+            const rates = [
+                { name: '30-Year Fixed', rate: '6.89%', apr: '7.12%', trend: 'down' },
+                { name: '15-Year Fixed', rate: '6.24%', apr: '6.45%', trend: 'down' },
+                { name: 'Investment', rate: '7.45%', apr: '7.68%', trend: 'up' },
+                { name: 'Jumbo 30', rate: '7.05%', apr: '7.28%', trend: 'down' }
+            ];
+            
+            document.getElementById('rates-grid').innerHTML = rates.map(r => `
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 text-center">
+                    <p class="text-sm text-gray-600">${r.name}</p>
+                    <p class="text-2xl font-bold text-primary">${r.rate}</p>
+                    <p class="text-xs text-gray-500">APR: ${r.apr}</p>
+                    <span class="text-xs ${r.trend === 'down' ? 'text-green-600' : 'text-red-600'}">
+                        ${r.trend === 'down' ? '▼' : '▲'} ${r.trend}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        // Helper
+        function generateMockProperties(count) {
+            const props = [];
+            for(let i=0; i<count; i++) {
+                const price = 300000 + Math.random() * 600000;
+                props.push({
+                    address: `${Math.floor(Math.random()*9999)} ${['Palm','Ocean','Lake'][Math.floor(Math.random()*3)]} Dr`,
+                    price: Math.round(price),
+                    originalPrice: Math.round(price * 1.15),
+                    beds: Math.floor(2 + Math.random() * 4),
+                    baths: Math.floor(2 + Math.random() * 2),
+                    sqft: Math.floor(1200 + Math.random() * 2000),
+                    dom: Math.floor(Math.random() * 120)
+                });
+            }
+            return props;
+        }
+
+        function refreshAllData() {
+            document.querySelector('.fa-sync-alt').classList.add('fa-spin');
+            setTimeout(() => {
+                document.querySelector('.fa-sync-alt').classList.remove('fa-spin');
+                loadDashboardStats();
+                performSearch();
+            }, 1000);
+        }
+
+        function initRatesChart() {
+            const ctx = document.getElementById('rates-chart').getContext('2d');
+            window.ratesChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+                    datasets: [{
+                        label: '30-Year Fixed',
+                        data: [7.2,7.1,7.0,6.95,6.9,6.85,6.8,6.82,6.88,6.9,6.89,6.89],
+                        borderColor: '#3b82f6'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+    </script>
+</body>
+</html>
