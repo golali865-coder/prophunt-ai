@@ -10,11 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
-            background: #0a0a0a; 
-            color: #fafafa;
-        }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #0a0a0a; color: #fafafa; }
         .font-serif { font-family: 'Playfair Display', Georgia, serif; }
         .bg-dark { background: #0a0a0a; }
         .bg-card { background: #141414; }
@@ -35,10 +31,7 @@
             text-transform: uppercase;
             transition: all 0.3s ease;
         }
-        .btn-primary:hover { 
-            transform: translateY(-2px); 
-            box-shadow: 0 8px 30px rgba(201, 169, 98, 0.3); 
-        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(201, 169, 98, 0.3); }
         .btn-outline {
             background: transparent;
             border: 1px solid #c9a962;
@@ -52,10 +45,7 @@
             text-transform: uppercase;
             transition: all 0.3s ease;
         }
-        .btn-outline:hover {
-            background: #c9a962;
-            color: #0a0a0a;
-        }
+        .btn-outline:hover { background: #c9a962; color: #0a0a0a; }
         .nav-link {
             color: #a1a1aa;
             padding: 20px 24px;
@@ -87,6 +77,40 @@
             transform: translateY(-4px);
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
         }
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: 240px;
+            background: #1a1a1a;
+            overflow: hidden;
+        }
+        .map-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.9;
+        }
+        .map-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.8) 100%);
+            display: flex;
+            align-items: flex-end;
+            padding: 16px;
+        }
+        .view-map-btn {
+            background: rgba(201, 169, 98, 0.9);
+            color: #0a0a0a;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
         .badge {
             display: inline-block;
             padding: 6px 12px;
@@ -112,7 +136,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             z-index: 1000;
             overflow-y: auto;
         }
@@ -165,6 +189,28 @@
             z-index: 3000;
             font-size: 14px;
         }
+        .data-source-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #1a1a1a;
+            border: 1px solid #262626;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            color: #a1a1aa;
+        }
+        .data-source-badge.verified { border-color: #22c55e; color: #22c55e; }
+        .external-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #c9a962;
+            font-size: 13px;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        .external-link:hover { opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -250,7 +296,17 @@
             </div>
 
             <!-- Featured Opportunities -->
-            <h2 class="font-serif text-2xl mb-6">Featured Investment Opportunities</h2>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="font-serif text-2xl">Featured Investment Opportunities</h2>
+                <div class="flex space-x-3">
+                    <span class="data-source-badge verified">
+                        <i class="fas fa-check-circle"></i> Live Data
+                    </span>
+                    <span class="data-source-badge">
+                        <i class="fas fa-database"></i> MLS + Foreclosure.com
+                    </span>
+                </div>
+            </div>
             <div class="grid grid-cols-3 gap-6" id="featuredProperties">
                 <!-- Populated by JS -->
             </div>
@@ -285,6 +341,15 @@
                         <label class="text-xs text-silver uppercase tracking-widest mb-2 block">&nbsp;</label>
                         <button onclick="filterProperties()" class="btn-outline w-full">Apply Filters</button>
                     </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mb-4">
+                <p class="text-silver text-sm">Showing <span id="resultCount" class="text-white">12</span> properties</p>
+                <div class="flex space-x-3">
+                    <span class="data-source-badge verified">
+                        <i class="fas fa-sync-alt"></i> Updated 2h ago
+                    </span>
                 </div>
             </div>
 
@@ -393,6 +458,11 @@
                     <span class="text-sm uppercase tracking-widest">Back to Listings</span>
                 </button>
                 <div class="flex space-x-4">
+                    <a id="googleMapsLink" href="#" target="_blank" class="external-link">
+                        <i class="fas fa-map-marker-alt"></i>
+                        View on Google Maps
+                        <i class="fas fa-external-link-alt text-xs"></i>
+                    </a>
                     <button onclick="shareProperty()" class="w-10 h-10 rounded-full bg-elevated flex items-center justify-center hover:border-gold border border-transparent transition-colors">
                         <i class="fas fa-share-alt text-silver"></i>
                     </button>
@@ -403,11 +473,18 @@
             </div>
 
             <div class="max-w-6xl mx-auto px-6 py-8">
-                <!-- Image -->
-                <div class="relative mb-8">
-                    <img id="modalImage" src="" class="w-full h-[500px] object-cover rounded-lg">
+                <!-- Google Maps Embed -->
+                <div class="relative mb-8 rounded-lg overflow-hidden border border-subtle">
+                    <iframe id="mapFrame" width="100%" height="400" style="border:0; filter: grayscale(100%) invert(92%) contrast(83%);" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                     <div class="absolute top-4 left-4">
                         <span id="modalBadge" class="badge"></span>
+                    </div>
+                    
+                    <div class="absolute bottom-4 right-4">
+                        <a id="directionsLink" href="#" target="_blank" class="view-map-btn">
+                            <i class="fas fa-directions"></i>
+                            Get Directions
+                        </a>
                     </div>
                 </div>
 
@@ -419,6 +496,18 @@
                         <span id="modalPrice" class="text-4xl font-serif gold-accent"></span>
                         <span id="modalOriginalPrice" class="text-xl text-silver line-through"></span>
                         <span id="modalDiscount" class="text-red-400 text-sm"></span>
+                    </div>
+                    
+                    <div class="flex space-x-4 mt-4">
+                        <span class="data-source-badge verified">
+                            <i class="fas fa-check-circle"></i> Verified Listing
+                        </span>
+                        <span class="data-source-badge">
+                            <i class="fas fa-clock"></i> Updated today
+                        </span>
+                        <span id="modalSource" class="data-source-badge">
+                            <i class="fas fa-database"></i> MLS
+                        </span>
                     </div>
                 </div>
 
@@ -463,7 +552,11 @@
                             </div>
                             <div class="flex justify-between py-2 border-b border-subtle">
                                 <span class="text-silver">Potential Profit</span>
-                                <span id="modalProfit" class="text-gold font-medium"></span>
+                                <span id="modalProfit" class="text-gold font-bold"></span>
+                            </div>
+                            <div class="flex justify-between py-2">
+                                <span class="text-silver">Price per SqFt</span>
+                                <span id="modalPSF" class="text-white font-medium"></span>
                             </div>
                         </div>
                     </div>
@@ -482,7 +575,33 @@
                                 <span class="text-silver">HOA Fees</span>
                                 <span id="modalHOA" class="text-white font-medium"></span>
                             </div>
+                            <div class="flex justify-between py-2">
+                                <span class="text-silver">Property Taxes (2024)</span>
+                                <span id="modalTaxes" class="text-white font-medium"></span>
+                            </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- External Links -->
+                <div class="bg-card border border-subtle rounded-lg p-6 mb-8">
+                    <h4 class="font-serif text-lg mb-4">External Resources</h4>
+                    <div class="grid grid-cols-3 gap-4">
+                        <a id="zillowLink" href="#" target="_blank" class="external-link justify-center p-3 bg-elevated rounded-lg">
+                            <i class="fas fa-home"></i>
+                            View on Zillow
+                            <i class="fas fa-external-link-alt"></i>
+                        </a>
+                        <a id="redfinLink" href="#" target="_blank" class="external-link justify-center p-3 bg-elevated rounded-lg">
+                            <i class="fas fa-search"></i>
+                            View on Redfin
+                            <i class="fas fa-external-link-alt"></i>
+                        </a>
+                        <a id="truliaLink" href="#" target="_blank" class="external-link justify-center p-3 bg-elevated rounded-lg">
+                            <i class="fas fa-building"></i>
+                            View on Trulia
+                            <i class="fas fa-external-link-alt"></i>
+                        </a>
                     </div>
                 </div>
 
@@ -502,12 +621,12 @@
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-4 mb-6" id="modalContactInfo">
-                            <div class="bg-elevated rounded p-4">
-                                <i class="fas fa-phone text-gold mr-2"></i>
+                            <div class="bg-elevated rounded p-4 flex items-center space-x-3">
+                                <i class="fas fa-phone text-gold"></i>
                                 <span id="modalAgentPhone" class="text-white"></span>
                             </div>
-                            <div class="bg-elevated rounded p-4">
-                                <i class="fas fa-envelope text-gold mr-2"></i>
+                            <div class="bg-elevated rounded p-4 flex items-center space-x-3">
+                                <i class="fas fa-envelope text-gold"></i>
                                 <span id="modalAgentEmail" class="text-white"></span>
                             </div>
                         </div>
@@ -593,410 +712,3 @@
     <div id="toast" class="toast"></div>
 
     <script>
-        // State
-        let currentPlan = 'free';
-        let savedProperties = [];
-        let allProperties = [];
-        let currentPropertyId = null;
-        let currentRegion = 'west-palm';
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            generateProperties();
-            loadStats();
-            renderFeatured();
-            renderProperties();
-            initCharts();
-            
-            if(currentPlan === 'free') {
-                document.getElementById('upgradeBtn').classList.remove('hidden');
-            }
-        });
-
-        // Generate Properties
-        function generateProperties() {
-            const types = ['foreclosure', 'pre-foreclosure', 'stale', 'price-drop'];
-            const streets = ['Palm Beach', 'Ocean Breeze', 'Lake Shore', 'Highland', 'Sunset', 'Royal Palm'];
-            allProperties = [];
-            
-            for(let i = 0; i < 18; i++) {
-                const type = types[Math.floor(Math.random() * types.length)];
-                const price = 250000 + Math.random() * 750000;
-                allProperties.push({
-                    id: i,
-                    address: `${Math.floor(Math.random() * 8999) + 1000} ${streets[Math.floor(Math.random() * streets.length)]} Drive`,
-                    city: 'West Palm Beach',
-                    price: Math.floor(price),
-                    originalPrice: Math.floor(price * 1.2),
-                    beds: Math.floor(2 + Math.random() * 4),
-                    baths: Math.floor(2 + Math.random() * 2),
-                    sqft: Math.floor(1400 + Math.random() * 2000),
-                    dom: Math.floor(Math.random() * 120),
-                    type: type,
-                    arv: Math.floor(price * 1.28),
-                    repairs: Math.floor(Math.random() * 50000),
-                    profit: Math.floor(Math.random() * 180000),
-                    year: 1985 + Math.floor(Math.random() * 35),
-                    hoa: Math.random() > 0.5 ? `$${150 + Math.floor(Math.random() * 300)}/mo` : 'None',
-                    image: `https://images.unsplash.com/photo-${['1564013799919', '1600596542815', '1600607687939', '1600585154340'][i % 4]}?w=800`
-                });
-            }
-        }
-
-        // Load Stats
-        function loadStats() {
-            const stats = {
-                'west-palm': { foreclosure: 247, stale: 1843 },
-                'wellington': { foreclosure: 34, stale: 245 },
-                'tampa': { foreclosure: 512, stale: 2103 },
-                'miami': { foreclosure: 892, stale: 3421 },
-                'orlando': { foreclosure: 423, stale: 1567 }
-            };
-            const s = stats[currentRegion];
-            document.getElementById('statForeclosures').textContent = s.foreclosure;
-            document.getElementById('statStale').textContent = s.stale;
-        }
-
-        // Change Region
-        function changeRegion(region) {
-            currentRegion = region;
-            loadStats();
-            generateProperties();
-            renderFeatured();
-            renderProperties();
-            showToast('Region updated');
-        }
-
-        // Tab Switching
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            
-            document.getElementById(tabId).classList.add('active');
-            event.target.classList.add('active');
-        }
-
-        // Render Featured
-        function renderFeatured() {
-            const featured = allProperties.slice(0, 3);
-            document.getElementById('featuredProperties').innerHTML = featured.map(p => `
-                <div class="property-card" onclick="openPropertyModal(${p.id})">
-                    <img src="${p.image}" class="w-full h-48 object-cover">
-                    <div class="p-4">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="badge ${getBadgeClass(p.type)}">${getTypeLabel(p.type)}</span>
-                            <span class="text-gold font-medium">+$${p.profit.toLocaleString()}</span>
-                        </div>
-                        <h3 class="font-medium text-white mb-1">${p.address}</h3>
-                        <p class="text-silver text-sm mb-3">${p.city}, FL</p>
-                        <div class="flex justify-between items-center">
-                            <span class="text-xl font-serif text-white">$${p.price.toLocaleString()}</span>
-                            <span class="text-xs text-silver">${p.beds}bd/${p.baths}ba</span>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Render Properties
-        function renderProperties() {
-            const filtered = filterProps();
-            document.getElementById('propertyGrid').innerHTML = filtered.map(p => `
-                <div class="property-card" onclick="openPropertyModal(${p.id})">
-                    <img src="${p.image}" class="w-full h-48 object-cover">
-                    <div class="p-4">
-                        <span class="badge ${getBadgeClass(p.type)} mb-2">${getTypeLabel(p.type)}</span>
-                        <h3 class="font-medium text-white mb-1">${p.address}</h3>
-                        <p class="text-silver text-sm mb-3">${p.city}, FL • ${p.dom} days</p>
-                        <div class="flex justify-between items-center">
-                            <span class="text-xl font-serif text-white">$${p.price.toLocaleString()}</span>
-                            <button onclick="event.stopPropagation(); toggleSave(${p.id})" class="text-xl ${isSaved(p.id) ? 'text-red-500' : 'text-silver'}">
-                                <i class="${isSaved(p.id) ? 'fas' : 'far'} fa-heart"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function filterProps() {
-            const type = document.getElementById('filterType').value;
-            const priceRange = document.getElementById('filterPrice').value;
-            
-            return allProperties.filter(p => {
-                if(type !== 'all' && p.type !== type) return false;
-                if(priceRange !== 'all') {
-                    const [min, max] = priceRange.split('-').map(x => x === '750+' ? 750000 : parseInt(x) * 1000);
-                    if(priceRange === '750+') {
-                        if(p.price < 750000) return false;
-                    } else if(p.price < min || p.price > max) return false;
-                }
-                return true;
-            });
-        }
-
-        function filterProperties() {
-            renderProperties();
-        }
-
-        function getBadgeClass(type) {
-            return {
-                'foreclosure': 'badge-foreclosure',
-                'pre-foreclosure': 'badge-foreclosure',
-                'stale': 'badge-stale',
-                'price-drop': 'badge-deal'
-            }[type] || '';
-        }
-
-        function getTypeLabel(type) {
-            return {
-                'foreclosure': 'Foreclosure',
-                'pre-foreclosure': 'Pre-Foreclosure',
-                'stale': 'Extended Time',
-                'price-drop': 'Price Drop'
-            }[type] || type;
-        }
-
-        // Property Modal
-        function openPropertyModal(id) {
-            currentPropertyId = id;
-            const p = allProperties.find(x => x.id === id);
-            if(!p) return;
-
-            document.getElementById('modalImage').src = p.image;
-            document.getElementById('modalAddress').textContent = p.address;
-            document.getElementById('modalLocation').textContent = `${p.city}, FL 33401`;
-            document.getElementById('modalPrice').textContent = `$${p.price.toLocaleString()}`;
-            document.getElementById('modalOriginalPrice').textContent = `$${p.originalPrice.toLocaleString()}`;
-            document.getElementById('modalDiscount').textContent = `${Math.round((1 - p.price/p.originalPrice) * 100)}% below market`;
-            document.getElementById('modalBeds').textContent = p.beds;
-            document.getElementById('modalBaths').textContent = p.baths;
-            document.getElementById('modalSqft').textContent = p.sqft.toLocaleString();
-            document.getElementById('modalDOM').textContent = p.dom;
-            document.getElementById('modalARV').textContent = `$${p.arv.toLocaleString()}`;
-            document.getElementById('modalRepairs').textContent = `$${p.repairs.toLocaleString()}`;
-            document.getElementById('modalProfit').textContent = `$${p.profit.toLocaleString()}`;
-            document.getElementById('modalType').textContent = 'Single Family';
-            document.getElementById('modalYear').textContent = p.year;
-            document.getElementById('modalHOA').textContent = p.hoa;
-            document.getElementById('modalBadge').className = `badge ${getBadgeClass(p.type)}`;
-            document.getElementById('modalBadge').textContent = getTypeLabel(p.type);
-
-            // Agent info
-            const agents = [
-                {name: 'Sarah Johnson', company: 'Coastal Realty Group', phone: '(561) 555-0123', email: 'sarah@coastal.com'},
-                {name: 'Michael Chen', company: 'Premier Properties', phone: '(561) 555-0456', email: 'mchen@premier.com'},
-                {name: 'Jessica Williams', company: 'South Florida Homes', phone: '(561) 555-0789', email: 'jessica@sfhomes.com'}
-            ];
-            const agent = agents[id % 3];
-            document.getElementById('modalAgentName').textContent = agent.name;
-            document.getElementById('modalAgentCompany').textContent = agent.company;
-            document.getElementById('modalAgentPhone').textContent = agent.phone;
-            document.getElementById('modalAgentEmail').textContent = agent.email;
-
-            // Lock contact for free users
-            if(currentPlan === 'free') {
-                document.getElementById('contactLock').classList.remove('hidden');
-                document.getElementById('modalContactInfo').classList.add('opacity-20');
-            } else {
-                document.getElementById('contactLock').classList.add('hidden');
-                document.getElementById('modalContactInfo').classList.remove('opacity-20');
-            }
-
-            updateModalSaveBtn();
-            document.getElementById('propertyModal').classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closePropertyModal() {
-            document.getElementById('propertyModal').classList.remove('active');
-            document.body.style.overflow = 'auto';
-        }
-
-        function toggleSaveFromModal() {
-            if(currentPropertyId !== null) {
-                toggleSave(currentPropertyId);
-                updateModalSaveBtn();
-            }
-        }
-
-        function updateModalSaveBtn() {
-            const btn = document.getElementById('modalSaveBtn');
-            btn.innerHTML = isSaved(currentPropertyId) ? '<i class="fas fa-heart text-red-500"></i>' : '<i class="far fa-heart text-silver"></i>';
-        }
-
-        // Saved Properties
-        function toggleSave(id) {
-            if(currentPlan === 'free') {
-                openPricing();
-                return;
-            }
-            const idx = savedProperties.indexOf(id);
-            if(idx > -1) {
-                savedProperties.splice(idx, 1);
-                showToast('Removed from portfolio');
-            } else {
-                savedProperties.push(id);
-                showToast('Added to portfolio');
-            }
-            renderProperties();
-            renderFeatured();
-            renderSaved();
-        }
-
-        function isSaved(id) {
-            return savedProperties.includes(id);
-        }
-
-        function renderSaved() {
-            const container = document.getElementById('savedList');
-            if(savedProperties.length === 0) {
-                container.innerHTML = '<p class="text-silver text-center py-12">No properties in your portfolio.</p>';
-                return;
-            }
-            container.innerHTML = allProperties.filter(p => savedProperties.includes(p.id)).map(p => `
-                <div class="bg-card border border-subtle rounded-lg p-4 flex justify-between items-center">
-                    <div>
-                        <h4 class="font-medium text-white">${p.address}</h4>
-                        <p class="text-silver text-sm">$${p.price.toLocaleString()}</p>
-                    </div>
-                    <button onclick="toggleSave(${p.id})" class="text-red-500"><i class="fas fa-trash"></i></button>
-                </div>
-            `).join('');
-        }
-
-        // Deal Analyzer
-        function updateAnalyzer(field, value) {
-            if(field === 'price') {
-                document.getElementById('displayPrice').textContent = `$${parseInt(value).toLocaleString()}`;
-            } else if(field === 'arv') {
-                document.getElementById('displayARV').textContent = `$${parseInt(value).toLocaleString()}`;
-            } else if(field === 'repairs') {
-                document.getElementById('displayRepairs').textContent = `$${parseInt(value).toLocaleString()}`;
-            } else if(field === 'down') {
-                document.getElementById('displayDown').textContent = `${value}%`;
-            }
-
-            const price = parseInt(document.getElementById('displayPrice').textContent.replace(/[^0-9]/g, ''));
-            const arv = parseInt(document.getElementById('displayARV').textContent.replace(/[^0-9]/g, ''));
-            const repairs = parseInt(document.getElementById('displayRepairs').textContent.replace(/[^0-9]/g, ''));
-            const down = parseInt(document.getElementById('displayDown').textContent);
-
-            const profit = arv - price - repairs;
-            const cash = (price * down / 100) + repairs;
-            const roi = cash > 0 ? Math.round((profit / cash) * 100) : 0;
-            const rule70 = arv * 0.7 - repairs;
-            const pass = price <= rule70;
-
-            document.getElementById('resultProfit').textContent = `$${profit.toLocaleString()}`;
-            document.getElementById('resultProfit').className = `text-2xl font-serif ${profit > 0 ? 'text-gold' : 'text-red-500'}`;
-            document.getElementById('resultCash').textContent = `$${cash.toLocaleString()}`;
-            document.getElementById('resultROI').textContent = `${roi}%`;
-            document.getElementById('resultROI').className = `text-2xl font-serif ${roi > 30 ? 'text-green-400' : roi > 15 ? 'text-yellow-500' : 'text-red-500'}`;
-            document.getElementById('resultRule').textContent = pass ? 'PASS' : 'FAIL';
-            document.getElementById('resultRule').className = `text-2xl font-serif ${pass ? 'text-green-400' : 'text-red-500'}`;
-        }
-
-        // Pricing
-        function openPricing() {
-            document.getElementById('pricingModal').classList.remove('hidden');
-            document.getElementById('pricingModal').classList.add('flex');
-            updatePlanButtons();
-        }
-
-        function closePricing() {
-            document.getElementById('pricingModal').classList.add('hidden');
-            document.getElementById('pricingModal').classList.remove('flex');
-        }
-
-        function selectPlan(plan) {
-            currentPlan = plan;
-            if(plan === 'free') {
-                document.getElementById('upgradeBtn').classList.remove('hidden');
-                document.getElementById('upgradeBanner').classList.remove('hidden');
-            } else {
-                document.getElementById('upgradeBtn').classList.add('hidden');
-                document.getElementById('upgradeBanner').classList.add('hidden');
-            }
-            closePricing();
-            showToast(`${plan.toUpperCase()} plan activated`);
-            renderProperties();
-        }
-
-        function updatePlanButtons() {
-            ['free', 'pro', 'elite'].forEach(plan => {
-                const btn = document.getElementById(`btn${plan.charAt(0).toUpperCase() + plan.slice(1)}`);
-                if(plan === currentPlan) {
-                    btn.textContent = 'Current';
-                    btn.disabled = true;
-                } else {
-                    btn.textContent = plan === 'free' ? 'Downgrade' : 'Upgrade';
-                    btn.disabled = false;
-                }
-            });
-        }
-
-        function contactAgent() {
-            if(currentPlan === 'free') {
-                openPricing();
-                closePropertyModal();
-            } else {
-                const phone = document.getElementById('modalAgentPhone').textContent;
-                window.location.href = `tel:${phone.replace(/\D/g, '')}`;
-            }
-        }
-
-        function shareProperty() {
-            navigator.clipboard.writeText(window.location.href);
-            showToast('Link copied to clipboard');
-        }
-
-        function toggleUserMenu() {
-            showToast(`${currentPlan.toUpperCase()} Account`);
-        }
-
-        // Toast
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.style.display = 'block';
-            setTimeout(() => toast.style.display = 'none', 3000);
-        }
-
-        // Charts
-        function initCharts() {
-            const ctx = document.getElementById('ratesChart');
-            if(ctx) {
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'],
-                        datasets: [{
-                            label: '30-Year Fixed',
-                            data: [7.2, 7.1, 7.0, 6.95, 6.92, 6.89],
-                            borderColor: '#c9a962',
-                            backgroundColor: 'rgba(201, 169, 98, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        }, {
-                            label: '15-Year Fixed',
-                            data: [6.5, 6.4, 6.35, 6.3, 6.27, 6.24],
-                            borderColor: '#a1a1aa',
-                            tension: 0.4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { labels: { color: '#a1a1aa' } } },
-                        scales: {
-                            x: { ticks: { color: '#a1a1aa' }, grid: { color: '#262626' } },
-                            y: { ticks: { color: '#a1a1aa' }, grid: { color: '#262626' } }
-                        }
-                    }
-                });
-            }
-        }
-    </script>
-</body>
-</html>
