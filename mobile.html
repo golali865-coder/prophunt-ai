@@ -1,4 +1,4 @@
-        // GOVERNMENT PROPERTY DATABASE
+
         var propertyDatabase = {
             'palm-beach': [
                 { id: 'PBC-2024-001', address: '2145 Belvedere Rd', city: 'West Palm Beach', state: 'FL', zip: '33406', lat: 26.6495, lng: -80.0901, price: 285000, assessedValue: 420000, beds: 3, baths: 2, sqft: 1645, year: 1984, dom: 127, type: 'pre-foreclosure', status: 'Lis Pendens Filed', caseNumber: '502024CA012345', court: 'Palm Beach County', plaintiff: 'Wells Fargo Bank', mortgageAmount: 312000, judgmentAmount: 345000, taxDelinquent: '$8,450', irsLien: '$12,300', auctionDate: '2024-04-15', attorney: 'Shapiro & Fishman', attorneyPhone: '(561) 555-0199', legalDesc: 'LOT 12 BLK 4 BELVEDERE HEIGHTS', parcelId: '00-43-46-27-01-012-0120', source: 'PBC Clerk of Court' },
@@ -28,7 +28,6 @@
         var currentPropertyId = null;
         var currentRegion = 'palm-beach';
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             loadProperties();
             loadStats();
@@ -116,7 +115,7 @@
             for (var i = 0; i < filtered.length; i++) {
                 var p = filtered[i];
                 html += '<div class="card" onclick="viewProperty(\'' + p.id + '\')">';
-                html += '<div class="map-container" style="height:140px;"><iframe src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d20000!2d' + p.lng + '!3d' + p.lat + '!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sus!4v1234567890" allowfullscreen loading="lazy"></iframe></div>';
+                html += '<div class="map-container"><iframe src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d20000!2d' + p.lng + '!3d' + p.lat + '!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sus!4v1234567890" allowfullscreen loading="lazy"></iframe></div>';
                 html += '<div class="p-3">';
                 html += '<span class="badge ' + getBadgeClass(p.type) + ' mb-1">' + getTypeLabel(p.type) + '</span>';
                 html += '<p class="font-bold text-white text-sm mb-0.5">' + p.address + '</p>';
